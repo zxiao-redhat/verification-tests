@@ -32,3 +32,18 @@ Feature: API server Test features
     # The platform type from the baremetal openshift we get is None, we need to handle this type and return one value(even if it's nil), 
     # ensure check iaas type with baremetal without exception and exit.
     Given evaluation of `env.iaas[:type] == "aws" ? "1500" : "1300"` is stored in the :wait_time clipboard
+
+  Scenario: Check conditional step execution
+    # test if condition satisfied
+    Given I execute steps if true:
+    """
+    Given evaluation of `true` is stored in the :confitional_step_executed clipboard
+    """
+    Then the expression should be true> cb.confitional_step_executed
+    # test if condition not satisfied
+    Given evaluation of `true` is stored in the :confitional_step_not_executed clipboard
+    And I execute steps if false:
+    """
+    Given evaluation of `false` is stored in the :confitional_step_not_executed clipboard
+    """
+    Then the expression should be true> cb.confitional_step_not_executed

@@ -59,6 +59,24 @@ Given /^I wait(?: up to #{NUMBER} seconds)? for the steps to pass:$/ do |seconds
   end
 end
 
+# run steps only if the provided condition is satisfied
+Given /^I execute steps if (.+):$/ do |condition, steps_string|
+  if eval(condition)
+    eval_regex = /\#\{(.+?)\}/
+    eval_found = steps_string =~ eval_regex
+    begin
+      logger.dedup_start
+      if eval_found
+        steps steps_string.gsub(eval_regex) { |s| "<%= #{$1} %>"}
+      else
+        steps steps_string
+      end
+    ensure
+      logger.dedup_flush
+    end
+  end
+end
+
 # note that when steps started before time limit was reached, if they take
 # more time to complete than the limit, total execute time will be longer
 Given /^I repeat the steps up to #{NUMBER} seconds:$/ do |seconds, steps_string|

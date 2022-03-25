@@ -60,7 +60,7 @@ Given /^I wait(?: up to #{NUMBER} seconds)? for the steps to pass:$/ do |seconds
 end
 
 # run steps only if the provided condition is satisfied
-Given /^I execute steps if (.+):$/ do |condition, steps_string|
+Given /^I execute steps if `(.+)`:$/ do |condition, steps_string|
   if eval(condition)
     eval_regex = /\#\{(.+?)\}/
     eval_found = steps_string =~ eval_regex

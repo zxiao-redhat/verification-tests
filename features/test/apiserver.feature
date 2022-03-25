@@ -35,14 +35,14 @@ Feature: API server Test features
 
   Scenario: Check conditional step execution
     # test if condition satisfied
-    Given I execute steps if true:
+    Given I execute steps if `true`:
     """
     Given evaluation of `true` is stored in the :confitional_step_executed clipboard
     """
     Then the expression should be true> cb.confitional_step_executed
     # test if condition not satisfied
     Given evaluation of `true` is stored in the :confitional_step_not_executed clipboard
-    And I execute steps if false:
+    And I execute steps if `false`:
     """
     Given evaluation of `false` is stored in the :confitional_step_not_executed clipboard
     """

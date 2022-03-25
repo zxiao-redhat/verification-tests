@@ -167,20 +167,55 @@ Feature: apiserver and auth related upgrade check
   @vsphere-upi @openstack-upi @gcp-upi @baremetal-upi @azure-upi @aws-upi
   @singlenode
   Scenario: Default RBAC role, rolebinding, clusterrole and clusterrolebinding without any missing after upgraded
-    # Checking original clusterrole resources recovered after upgraded
-    When I run the :get admin command with:
-      | resource      | clusterroles.rbac            |
-      | resource_name | system:build-strategy-custom |
-      | o             | yaml                         |
-    Then the expression should be true> @result[:parsed]['rules'][0]['verbs'][0] == "get"
-    And the expression should be true> @result[:parsed]['rules'][1]['verbs'][0] == "create"
-    And the expression should be true> @result[:parsed]['rules'][2]['verbs'][0] == "create"
-    When I run the :get admin command with:
-      | resource      | clusterrolebinding.rbac     |
-      | resource_name | system:oauth-token-deleters |
-      | o             | yaml                        |
-    Then the expression should be true> @result[:parsed]['subjects'][0]['name'] == "system:authenticated"
-    And the expression should be true> @result[:parsed]['subjects'][1]['name'] == "system:unauthenticated"
+    # get registry path before upgrade
+    Given I run the :get admin command with:
+      | resource | clusterversion                               |
+      | o        | jsonpath={.items[0].status.history[1].image} |
+    Then the step should succeed
+    And evaluation of `@result[:response]` is stored in the :before_upgrade_registry_path clipboard
+
+    # get registry path after upgrade
+    Given I run the :get admin command with:
+      | resource | clusterversion           |
+      | o        | jsonpath={.items[0].status.history[0].image} |
+    Then the step should succeed
+    And evaluation of `@result[:response]` is stored in the :after_upgrade_registry_path clipboard
+
+    Given I store the ready and schedulable masters in the clipboard
+    And I use the "<%= cb.nodes[0].name %>" node
+
+    # get image release info before upgrade
+    Given I run commands on the host:
+      | oc adm release info <%= cb.before_upgrade_registry_path %> --image-for=openshift-apiserver |
+    Then the step should succeed
+    And evaluation of `@result[:response]` is stored in the :before_upgrade_oc_adm_release_info clipboard
+    And I log the message> !!!!!!!! <%= cb.before_upgrade_registry_path %>
+
+    # get image release info after upgrade
+    Given I run commands on the host:
+      | oc adm release info <%= cb.after_upgrade_registry_path %> --image-for=openshift-apiserver |
+    Then the step should succeed
+    And evaluation of `@result[:response]` is stored in the :after_upgrade_oc_adm_release_info clipboard
+
+
+    # run only if apiserver image is changed after update, see https://issues.redhat.com/browse/OCPQE-8682
+    And I execute steps if `cb.before_upgrade_registry_path!=cb.after_upgrade_registry_path`:
+      """
+      # Checking original clusterrole resources recovered after upgraded
+      When I run the :get admin command with:
+        | resource      | clusterroles.rbac            |
+        | resource_name | system:build-strategy-custom |
+        | o             | yaml                         |
+      Then the expression should be true> @result[:parsed]['rules'][0]['verbs'][0] == "get"
+      And the expression should be true> @result[:parsed]['rules'][1]['verbs'][0] == "create"
+      And the expression should be true> @result[:parsed]['rules'][2]['verbs'][0] == "create"
+      When I run the :get admin command with:
+        | resource      | clusterrolebinding.rbac     |
+        | resource_name | system:oauth-token-deleters |
+        | o             | yaml                        |
+      Then the expression should be true> @result[:parsed]['subjects'][0]['name'] == "system:authenticated"
+      And the expression should be true> @result[:parsed]['subjects'][1]['name'] == "system:unauthenticated"
+      """
 
   # @author scheng@redhat.com
   @upgrade-prepare

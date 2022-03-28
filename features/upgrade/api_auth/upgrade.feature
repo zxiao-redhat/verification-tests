@@ -181,27 +181,27 @@ Feature: apiserver and auth related upgrade check
     Then the step should succeed
     And evaluation of `@result[:response]` is stored in the :after_upgrade_registry_path clipboard
 
-    Given I store the ready and schedulable masters in the clipboard
+    Given I switch to cluster admin pseudo user
+    And I store the ready and schedulable masters in the clipboard
     And I use the "<%= cb.nodes[0].name %>" node
 
     # get image release info before upgrade
     Given I run commands on the host:
-      | oc adm release info <%= cb.before_upgrade_registry_path %> --image-for=openshift-apiserver |
+      | oc adm release info --registry-config=/var/lib/kubelet/config.json <%= cb.before_upgrade_registry_path %> --image-for=openshift-apiserver |
     Then the step should succeed
     And evaluation of `@result[:response]` is stored in the :before_upgrade_oc_adm_release_info clipboard
-    And I log the message> !!!!!!!! <%= cb.before_upgrade_registry_path %>
 
     # get image release info after upgrade
     Given I run commands on the host:
-      | oc adm release info <%= cb.after_upgrade_registry_path %> --image-for=openshift-apiserver |
+      | oc adm release info --registry-config=/var/lib/kubelet/config.json <%= cb.after_upgrade_registry_path %> --image-for=openshift-apiserver |
     Then the step should succeed
     And evaluation of `@result[:response]` is stored in the :after_upgrade_oc_adm_release_info clipboard
 
 
-    # run only if apiserver image is changed after update, see https://issues.redhat.com/browse/OCPQE-8682
-    And I execute steps if `cb.before_upgrade_registry_path!=cb.after_upgrade_registry_path`:
+    # Checking original clusterrole resources recovered after upgraded
+    # Run only if apiserver image is changed after update, see https://issues.redhat.com/browse/OCPQE-8682
+    And I execute steps if `cb.before_upgrade_oc_adm_release_info!=cb.after_upgrade_oc_adm_release_info`:
       """
-      # Checking original clusterrole resources recovered after upgraded
       When I run the :get admin command with:
         | resource      | clusterroles.rbac            |
         | resource_name | system:build-strategy-custom |

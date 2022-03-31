@@ -201,21 +201,21 @@ Feature: apiserver and auth related upgrade check
     # Checking original clusterrole resources recovered after upgraded
     # Run only if apiserver image is changed after update, see https://issues.redhat.com/browse/OCPQE-8682
     And I execute steps if `cb.before_upgrade_oc_adm_release_info!=cb.after_upgrade_oc_adm_release_info`:
-      """
-      When I run the :get admin command with:
-        | resource      | clusterroles.rbac            |
-        | resource_name | system:build-strategy-custom |
-        | o             | yaml                         |
-      Then the expression should be true> @result[:parsed]['rules'][0]['verbs'][0] == "get"
-      And the expression should be true> @result[:parsed]['rules'][1]['verbs'][0] == "create"
-      And the expression should be true> @result[:parsed]['rules'][2]['verbs'][0] == "create"
-      When I run the :get admin command with:
-        | resource      | clusterrolebinding.rbac     |
-        | resource_name | system:oauth-token-deleters |
-        | o             | yaml                        |
-      Then the expression should be true> @result[:parsed]['subjects'][0]['name'] == "system:authenticated"
-      And the expression should be true> @result[:parsed]['subjects'][1]['name'] == "system:unauthenticated"
-      """
+    """
+    When I run the :get admin command with:
+      | resource      | clusterroles.rbac            |
+      | resource_name | system:build-strategy-custom |
+      | o             | yaml                         |
+    Then the expression should be true> @result[:parsed]['rules'][0]['verbs'][0] == "get"
+    And the expression should be true> @result[:parsed]['rules'][1]['verbs'][0] == "create"
+    And the expression should be true> @result[:parsed]['rules'][2]['verbs'][0] == "create"
+    When I run the :get admin command with:
+      | resource      | clusterrolebinding.rbac     |
+      | resource_name | system:oauth-token-deleters |
+      | o             | yaml                        |
+    Then the expression should be true> @result[:parsed]['subjects'][0]['name'] == "system:authenticated"
+    And the expression should be true> @result[:parsed]['subjects'][1]['name'] == "system:unauthenticated"
+    """
 
   # @author scheng@redhat.com
   @upgrade-prepare
